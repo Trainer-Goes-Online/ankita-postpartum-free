@@ -67,13 +67,18 @@ interface Country {
   flag: string;
 }
 const COUNTRIES: Country[] = [
+  { code: 'AE', name: 'UAE', dial: '+971', flag: '🇦🇪' },
+  { code: 'SA', name: 'Saudi Arabia', dial: '+966', flag: '🇸🇦' },
+  { code: 'QA', name: 'Qatar', dial: '+974', flag: '🇶🇦' },
+  { code: 'KW', name: 'Kuwait', dial: '+965', flag: '🇰🇼' },
+  { code: 'OM', name: 'Oman', dial: '+968', flag: '🇴🇲' },
+  { code: 'BH', name: 'Bahrain', dial: '+973', flag: '🇧🇭' },
   { code: 'IN', name: 'India', dial: '+91', flag: '🇮🇳' },
   { code: 'US', name: 'United States', dial: '+1', flag: '🇺🇸' },
   { code: 'GB', name: 'United Kingdom', dial: '+44', flag: '🇬🇧' },
   { code: 'AU', name: 'Australia', dial: '+61', flag: '🇦🇺' },
   { code: 'CA', name: 'Canada', dial: '+1', flag: '🇨🇦' },
   { code: 'SG', name: 'Singapore', dial: '+65', flag: '🇸🇬' },
-  { code: 'AE', name: 'UAE', dial: '+971', flag: '🇦🇪' },
   { code: 'NZ', name: 'New Zealand', dial: '+64', flag: '🇳🇿' },
   { code: 'DE', name: 'Germany', dial: '+49', flag: '🇩🇪' },
   { code: 'FR', name: 'France', dial: '+33', flag: '🇫🇷' },
@@ -87,6 +92,21 @@ const COUNTRIES: Country[] = [
   { code: 'LK', name: 'Sri Lanka', dial: '+94', flag: '🇱🇰' },
   { code: 'NP', name: 'Nepal', dial: '+977', flag: '🇳🇵' },
 ];
+
+// Locale-correct sample numbers for the phone field. Falls back to a generic
+// label for any country not listed here.
+const PHONE_PLACEHOLDERS: Record<string, string> = {
+  AE: '501234567',
+  SA: '501234567',
+  QA: '33123456',
+  KW: '51234567',
+  OM: '92123456',
+  BH: '36001234',
+  IN: '9876543210',
+  US: '2015550123',
+  GB: '7400123456',
+};
+
 
 // ── Validation ───────────────────────────────────────────────────────────────
 const NAME_RE = /^[a-zA-Z\s\-'.]{2,}$/;
@@ -227,7 +247,7 @@ function CheckoutBody() {
             className="mt-4 font-heading text-[22px] font-extrabold leading-tight sm:text-[28px] md:text-[36px]"
             style={{ color: C.ink }}
           >
-            Add Your Payment Details.
+            Save Your Free Spot.
           </m.h1>
           <m.p
             variants={fadeUp}
@@ -265,7 +285,7 @@ function CheckoutGrid() {
     phone: false,
     occupation: false,
   });
-  const [countryCode, setCountryCode] = useState('IN');
+  const [countryCode, setCountryCode] = useState('AE');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -485,7 +505,7 @@ function CheckoutGrid() {
                 <Field
                   id="firstName"
                   label="First Name"
-                  placeholder="Priya"
+                  placeholder="Aisha"
                   value={fields.firstName}
                   error={errors.firstName}
                   touched={touched.firstName}
@@ -496,7 +516,7 @@ function CheckoutGrid() {
                 <Field
                   id="lastName"
                   label="Last Name"
-                  placeholder="Sharma"
+                  placeholder="Khan"
                   value={fields.lastName}
                   error={errors.lastName}
                   touched={touched.lastName}
@@ -510,7 +530,7 @@ function CheckoutGrid() {
                 id="email"
                 label="Email Address"
                 type="email"
-                placeholder="priya@example.com"
+                placeholder="aisha@example.com"
                 value={fields.email}
                 error={errors.email}
                 touched={touched.email}
@@ -523,7 +543,7 @@ function CheckoutGrid() {
               <Field
                 id="city"
                 label="Town / City"
-                placeholder="Mumbai"
+                placeholder="Dubai"
                 value={fields.city}
                 error={errors.city}
                 touched={touched.city}
@@ -694,7 +714,7 @@ function buildTYUrl() {
 // ── Order summary card ───────────────────────────────────────────────────────
 // ── Value stack: same 10-item bonus list as the paid funnel, but with
 // the payable price replaced by "FREE". The label prefix (currency +
-// number) is env-driven so a media buyer can flip ₹10,000 → $120 → £90
+// number) is env-driven so a media buyer can flip $120 → ₹10,000 → £90
 // without a code change — see NEXT_PUBLIC_VALUE_STACK_LABEL.
 const RECAP: { title: string; label: string }[] = [
   { title: '5-Day Recovery Challenge', label: 'included' },
@@ -961,7 +981,7 @@ function PhoneInput({
         type="tel"
         className="min-w-0 flex-1 rounded-r-2xl bg-transparent px-3 py-3 text-[15px] placeholder:opacity-60 focus:outline-none sm:px-3.5"
         style={{ color: C.ink }}
-        placeholder={countryCode === 'IN' ? '9876543210' : 'Phone number'}
+        placeholder={PHONE_PLACEHOLDERS[countryCode] ?? 'Phone number'}
         value={value}
         onChange={(e) => onValueChange(e.target.value.replace(/\D/g, ''))}
         onBlur={onBlur}

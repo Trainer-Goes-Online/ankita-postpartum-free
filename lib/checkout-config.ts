@@ -5,9 +5,9 @@
  * copy, and deploy host can change without touching code:
  *
  *     NEXT_PUBLIC_PRODUCTION_HOST=intl.example.com     # deploy subdomain
- *     NEXT_PUBLIC_VALUE_STACK_LABEL=₹10,000            # "worth X" line
+ *     NEXT_PUBLIC_VALUE_STACK_LABEL=$120                 # "worth X" line
  *     NEXT_PUBLIC_WEBINAR_DATE=8th September           # batch date
- *     NEXT_PUBLIC_WEBINAR_TIMES=6 AM, 4 PM & 7 PM GMT  # session times
+ *     NEXT_PUBLIC_WEBINAR_TIMES=4:30 AM, 2:30 PM & 5:30 PM GST  # session times
  *     NEXT_PUBLIC_WHATSAPP_INVITE_URL=https://chat.whatsapp.com/...
  *
  * There is NO price env — this is a free registration funnel.
@@ -19,14 +19,15 @@ const PRODUCTION_HOST =
 // Value-stack label shown in "worth X" copy across landing sections.
 // Kept as a single string (not a number + currency) so it can be swapped
 // per campaign / region without any code change — e.g. `$120`, `₹10,000`,
-// `£90`, `€110`.
+// `£90`, `€110`. Default is USD — ads currently run in the UAE.
 const VALUE_STACK_LABEL =
-  process.env.NEXT_PUBLIC_VALUE_STACK_LABEL?.trim() || '₹10,000';
+  process.env.NEXT_PUBLIC_VALUE_STACK_LABEL?.trim() || '$120';
 
 const WEBINAR_DATE =
   process.env.NEXT_PUBLIC_WEBINAR_DATE?.trim() || '8th September';
 const WEBINAR_TIMES =
-  process.env.NEXT_PUBLIC_WEBINAR_TIMES?.trim() || '6 AM, 4 PM & 7 PM GMT';
+  process.env.NEXT_PUBLIC_WEBINAR_TIMES?.trim() ||
+  '4:30 AM, 2:30 PM & 5:30 PM GST';
 const WHATSAPP_INVITE_URL =
   process.env.NEXT_PUBLIC_WHATSAPP_INVITE_URL?.trim() ||
   'https://chat.whatsapp.com/PLACEHOLDER';
@@ -48,7 +49,9 @@ export const CHECKOUT_CONFIG = {
     fallbackEventSourceUrl: `https://${PRODUCTION_HOST}/register`,
   },
 
-  registrationTimezone: 'UTC',
+  // Gulf Standard Time (UTC+4) — the batch times above and the Pabbly
+  // registered_date/_time stamps are both expressed in the UAE's timezone.
+  registrationTimezone: 'Asia/Dubai',
   funnelSlug: 'postpartum-challenge-free',
   utmSessionKey: 'bodyworx_utm',
 
