@@ -144,10 +144,10 @@ export function Hero() {
           {/* Mobile-only product mockup — sits below the h1, hidden on lg+ */}
           <div className="mt-6 flex justify-center lg:hidden">
             <Image
-              src="/transformations/Mockup.png"
+              src="/transformations/ankitamockup-1.webp"
               alt="BodyWorx Postpartum Recovery Method mockup"
-              width={920}
-              height={620}
+              width={1380}
+              height={753}
               priority
               sizes="(max-width: 768px) 90vw, 460px"
               className="h-auto w-full max-w-[460px] select-none"
@@ -285,10 +285,10 @@ function ProductMockup() {
   return (
     <div className="relative mx-auto w-full max-w-[460px]">
       <Image
-        src="/transformations/ankitamockup-1.png"
+        src="/transformations/ankitamockup-1.webp"
         alt="BodyWorx Recovery Method app mockup"
-        width={920}
-        height={620}
+        width={1380}
+        height={753}
         priority
         sizes="(max-width: 768px) 90vw, 460px"
         className="h-auto w-full select-none"
