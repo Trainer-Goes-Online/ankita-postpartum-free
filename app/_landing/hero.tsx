@@ -223,15 +223,6 @@ function HeroOfferCard() {
         className="relative overflow-hidden rounded-[28px] shadow-[0_30px_80px_-30px_rgba(199,58,87,0.35)]"
         style={{ background: 'white', border: `1px solid ${C.line}` }}
       >
-        {/* Discount ribbon */}
-        <div
-          className="absolute top-5 right-5 z-10 rotate-6 rounded-2xl px-3 py-2 text-center text-white shadow-lg"
-          style={{ background: `linear-gradient(135deg, ${C.brand}, ${C.deep})` }}
-        >
-          <div className="text-[10px] font-bold uppercase tracking-[0.18em] opacity-80">Today Only</div>
-          <div className="font-heading text-2xl font-extrabold leading-none">70% OFF</div>
-        </div>
-
         {/* Product mockup graphic (laptop + phone composition) */}
         <div className="relative px-6 pt-7 pb-4" style={{ background: `linear-gradient(180deg, ${C.whisper}, white)` }}>
           <ProductMockup />

@@ -1711,7 +1711,7 @@ function Recap() {
   );
 }
 
-// ── 20. Final 70% off strip ──────────────────────────────────────────────────
+// ── 20. Final CTA strip ──────────────────────────────────────────────────────
 function FinalStrip() {
   return (
     <section data-final-strip className="relative isolate overflow-hidden py-16 md:py-20" style={{ background: C.black }}>
@@ -1735,7 +1735,7 @@ function FinalStrip() {
             style={{ background: `linear-gradient(135deg, ${C.brand}, ${C.deep})` }}
           >
             <Tag weight="fill" className="h-3.5 w-3.5" />
-            70% OFF Today Only
+            Limited Seats · Starts {WEBINAR_DATE}
           </m.div>
           <m.h2 variants={fadeUp} className="mt-5 font-heading text-[28px] font-extrabold leading-tight text-white sm:text-[42px]">
             Join the 5-Day Postpartum<br className="hidden sm:block" /> Recovery Challenge — 100% Free.
@@ -1749,7 +1749,7 @@ function FinalStrip() {
               Get Instant Access
               <ArrowRight weight="bold" className="h-4 w-4" />
             </Link>
-            <p className="mt-3 text-[12px] text-white/70">100% Money-Back Guarantee</p>
+            <p className="mt-3 text-[12px] text-white/70">100% Free · No card required</p>
           </m.div>
         </m.div>
       </div>
