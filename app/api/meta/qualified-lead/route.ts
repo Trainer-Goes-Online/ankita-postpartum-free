@@ -10,14 +10,17 @@ import {
 /**
  * POST /api/meta/qualified-lead
  *
- * Fires the custom `QualifiedLead` Meta CAPI event when a visitor selects
- * "Working Professional" in the checkout occupation dropdown. The client
- * dedupes with bw_ql_fired so this endpoint should only see one hit per
- * browser under normal use — Meta's 48h event_id dedup is the safety net.
+ * Fires the `QualifiedLead` Meta CAPI event for a visitor who identified
+ * as "Working Professional". Called from the register form's SUBMIT
+ * handler only — never from the dropdown's onChange — so `customer` is
+ * always a complete, validated identity set and the event carries full
+ * user_data (email-derived external_id included) rather than the thin,
+ * cookie-only payload an early dropdown pick used to produce.
  *
- * Body: `{customer, eventSourceUrl}`. Customer may be partially filled
- * (email/phone empty) if the visitor picks occupation before typing the
- * form — that's fine; we only send hashed fields we actually have.
+ * The client dedupes with bw_ql_fired so this endpoint should only see
+ * one hit per browser; Meta's 48h event_id dedup is the safety net.
+ *
+ * Body: `{customer, eventSourceUrl}`.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +65,6 @@ export async function POST(req: NextRequest) {
 
     const fbcCookie = req.cookies.get('_fbc')?.value;
     const fbp = req.cookies.get('_fbp')?.value;
-    const externalId = req.cookies.get('bw_uid')?.value;
     // L4 — build _fbc from bw_attr's fbclid+ts if the browser cookie
     // is empty (Pixel blocked / iOS ITP / in-app race).
     const attr = readAttrCookie(req.cookies.get(ATTR_COOKIE)?.value);
@@ -97,7 +99,6 @@ export async function POST(req: NextRequest) {
         lastName: customer.lastName,
         city: customer.city,
         country: customer.countryCode,
-        externalId,
         fbc,
         fbp,
         clientIp,

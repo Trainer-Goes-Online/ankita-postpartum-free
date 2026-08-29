@@ -24,9 +24,9 @@ import {
  *      funnel's create-order uses).
  *   3. Mint a deterministic registrationId (sha256(email + salt)) so
  *      double-submits from the same email get Meta-deduped within 48h.
- *   4. Fire Pabbly webhook (always — CRM row for every registration).
- *   5. Fire Meta CAPI CompleteRegistration (host-gated to production;
- *      preview / localhost skips cleanly).
+ *   4. Fire Pabbly webhook (host-gated to production — a preview or
+ *      localhost submit never creates a CRM row).
+ *   5. Fire Meta CAPI CompleteRegistration (same host gate).
  *   6. Return `{success, registrationId}` so the client can redirect
  *      to /thank-you.
  */
@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
     // ── Attribution: cookie primary, body supplement, referrer + _fbc fallback ──
     const fbcCookie = req.cookies.get('_fbc')?.value;
     const fbpCookie = req.cookies.get('_fbp')?.value;
-    const bwUid = req.cookies.get('bw_uid')?.value;
     const clientIp =
       req.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
       req.headers.get('x-real-ip') ??
@@ -136,6 +135,14 @@ export async function POST(req: NextRequest) {
       id:       resolved.utm.id,
     };
 
+    // ── Host gate ───────────────────────────────────────────────────────
+    // Applies to BOTH Pabbly and Meta CAPI. A submit from localhost or a
+    // *.vercel.app preview must not create a real CRM row any more than it
+    // may pollute the pixel dataset — `is_test` was never enough, because
+    // nothing downstream was obliged to read it.
+    const requestHost = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
+    const isProductionHost = CHECKOUT_CONFIG.capi.productionHosts.includes(requestHost);
+
     // ── Build the Pabbly payload ────────────────────────────────────────
     // Free-funnel schema — no amount/currency/payment_id fields. Adds:
     //   registration_id, registered_at, attribution_source, occupation
@@ -168,16 +175,18 @@ export async function POST(req: NextRequest) {
       client_user_agent: clientUserAgent,
       external_id:       externalIdEmailHash,
       event_source_url:  resolvedEventSourceUrl,
-      is_test:           'false',
+      is_test:           isProductionHost ? 'false' : 'true',
       fbclid:            resolved.fbclid,
       attribution_source: resolved.provenance,
       funnel:            CHECKOUT_CONFIG.funnelSlug,
     };
 
-    // ── Fire Pabbly (always, non-blocking) ──────────────────────────────
+    // ── Fire Pabbly (production host only, non-blocking) ─────────────────
     let pabblyStatus: 'sent' | 'skipped' | 'error' = 'skipped';
     const webhookUrl = process.env.PABBLY_WEBHOOK_URL;
-    if (webhookUrl) {
+    if (!isProductionHost) {
+      console.log(`[register] Pabbly skipped — non-production host "${requestHost}"`);
+    } else if (webhookUrl) {
       try {
         const r = await fetch(webhookUrl, {
           method: 'POST',
@@ -200,9 +209,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Fire Meta CAPI CompleteRegistration ─────────────────────────────
-    // Host-gated to production so localhost + previews never fire.
-    const requestHost = (req.headers.get('host') ?? '').toLowerCase().split(':')[0];
-    const isProductionHost = CHECKOUT_CONFIG.capi.productionHosts.includes(requestHost);
+    // Same host gate as Pabbly above.
     const metaPixelId =
       process.env.NEXT_PUBLIC_META_PIXEL_ID ?? process.env.META_PIXEL_ID;
     const metaAccessToken = process.env.META_CAPI_ACCESS_TOKEN;
@@ -222,13 +229,11 @@ export async function POST(req: NextRequest) {
           lastName: customer.lastName,
           city: customer.city,
           country: customer.countryCode,
-          externalId: bwUid,
           fbc: fbc || undefined,
           fbp: fbpCookie,
           clientIp: clientIp || undefined,
           clientUserAgent: clientUserAgent || undefined,
           eventSourceUrl: resolvedEventSourceUrl,
-          utm: utmResolved,
         });
         console.log(
           `[register] registrationId=${registrationId} Meta CAPI CompleteRegistration sent:`,

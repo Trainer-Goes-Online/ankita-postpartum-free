@@ -14,7 +14,7 @@
  */
 
 const PRODUCTION_HOST =
-  process.env.NEXT_PUBLIC_PRODUCTION_HOST?.trim() || 'bodyworx-free.local';
+  process.env.NEXT_PUBLIC_PRODUCTION_HOST?.trim() || 'international.bodyworx.in';
 
 // Value-stack label shown in "worth X" copy across landing sections.
 // Kept as a single string (not a number + currency) so it can be swapped

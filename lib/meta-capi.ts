@@ -58,3 +58,18 @@ export function hashCountry(country: string): string | undefined {
   const v = country.trim().toLowerCase();
   return v ? sha256Hex(v) : undefined;
 }
+
+/**
+ * SOP surface 6 — reduce any event_source_url to its ORIGIN before it
+ * reaches Meta. Meta crawls the URLs we send; a path like
+ * `/register?utm_campaign=postpartum-dr` is a classification signal on its
+ * own. Sending `https://host` only removes that surface entirely.
+ * Falls back to the raw string if it isn't a parseable absolute URL.
+ */
+export function toOrigin(url: string): string {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return url;
+  }
+}

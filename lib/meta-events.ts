@@ -1,4 +1,12 @@
-import { sha256Hex, hashEmail, hashPhone, hashName, hashCity, hashCountry, type Utm } from '@/lib/meta-capi';
+import {
+  hashEmail,
+  hashPhone,
+  hashName,
+  hashCity,
+  hashCountry,
+  sha256Hex,
+  toOrigin,
+} from '@/lib/meta-capi';
 
 /**
  * Meta CAPI event senders — free funnel.
@@ -9,16 +17,31 @@ import { sha256Hex, hashEmail, hashPhone, hashName, hashCity, hashCountry, type 
  *     (POST /api/meta/qualified-lead)
  *   - CompleteRegistration on successful /api/register submission
  *
- * Standard Meta event names (dataset not H&W-classified). Full PII
- * payload on the identified events (CompleteRegistration + IC + QL) —
- * same 11-signal user_data shape used by the sibling paid funnel's
- * Purchase/sales, minus the money fields.
+ * H&W PREVENTIVE POSTURE (META_HW_PREVENTIVE_SOP.md)
+ * ---------------------------------------------------
+ * Standard event names are retained by explicit decision, but every OTHER
+ * classification surface the SOP names is stripped:
+ *
+ *   - custom_data carries NO descriptive strings. No content_name,
+ *     content_ids, content_type, category, lead_type, and no utm_* /
+ *     fbclid. An opaque `order_id` is the only field that survives, and
+ *     only where we have one. These strings were the loudest signal we
+ *     controlled — "Postpartum Recovery Challenge" told Meta's classifier
+ *     exactly what the dataset was about.
+ *   - event_source_url is reduced to its ORIGIN (toOrigin) so no health-y
+ *     path or query string is ever crawled.
+ *   - external_id is sha256(lowercased email) on every event — one stable
+ *     identity that reconciles 1:1 with the Pabbly `external_id` column.
+ *
+ * Full hashed user_data stays (EMQ) — hashed PII is not a classification
+ * signal and is what keeps match quality high.
  */
 
 /**
- * AddToCart — no PII available at CTA click time. Only signals we have
- * are fbc/fbp cookies + IP + UA. Expected EMQ: 3–5 (data-availability
- * ceiling, not a bug).
+ * AddToCart — no PII available at CTA click time (the visitor hasn't
+ * typed anything yet), so there is no email to derive external_id from.
+ * Only signals we have are fbc/fbp cookies + IP + UA. Expected EMQ: 3–5
+ * — a data-availability ceiling, not a bug.
  */
 export async function sendAddToCartEvent(params: {
   pixelId: string;
@@ -43,12 +66,8 @@ export async function sendAddToCartEvent(params: {
     ...(params.clientIp && { client_ip_address: params.clientIp }),
   };
 
-  const customData = {
-    content_ids: ['postnatal_recovery_challenge_free'],
-    content_name: '5-Day Postpartum Recovery Challenge — Free Registration',
-    content_type: 'product',
-  };
-
+  // No custom_data at all — nothing descriptive to say about a CTA click,
+  // and anything we did say would only feed the classifier.
   const payload = {
     data: [
       {
@@ -56,9 +75,8 @@ export async function sendAddToCartEvent(params: {
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: 'website',
-        event_source_url: params.eventSourceUrl,
+        event_source_url: toOrigin(params.eventSourceUrl),
         user_data: userData,
-        custom_data: customData,
       },
     ],
   };
@@ -94,13 +112,11 @@ export async function sendCompleteRegistrationEvent(params: {
   lastName: string;
   city: string;
   country: string;
-  externalId: string | undefined;
   fbc: string | undefined;
   fbp: string | undefined;
   clientIp: string | undefined;
   clientUserAgent: string | undefined;
   eventSourceUrl: string;
-  utm: Utm;
 }) {
   const em = hashEmail(params.email);
   const ph = hashPhone(params.phone);
@@ -108,9 +124,10 @@ export async function sendCompleteRegistrationEvent(params: {
   const ln = hashName(params.lastName);
   const ct = hashCity(params.city);
   const country = hashCountry(params.country);
-  const externalId = params.externalId
-    ? sha256Hex(params.externalId.trim().toLowerCase())
-    : undefined;
+  // external_id — sha256(lowercased email), identical to the value the
+  // Pabbly payload ships under the same key, so a CRM row and a Meta
+  // event can be reconciled without a second identifier.
+  const externalId = em;
 
   const userData = {
     ...(em && { em: [em] }),
@@ -126,21 +143,12 @@ export async function sendCompleteRegistrationEvent(params: {
     ...(params.clientIp && { client_ip_address: params.clientIp }),
   };
 
-  // No `value` / `currency` — this is a free registration, not a
-  // purchase. Meta CompleteRegistration expects a currency+value pair
-  // only for paid registrations; a free registration ships neither.
+  // No `value` / `currency` — free registration, nothing is charged. No
+  // content_name / content_ids / status / utm_* either: those are the
+  // descriptive strings the preventive SOP strips. `order_id` is an
+  // opaque hash prefix and says nothing about the offer.
   const customData = {
-    content_ids: ['postnatal_recovery_challenge_free'],
-    content_name: '5-Day Postpartum Recovery Challenge — Free Registration',
-    content_type: 'product',
-    status: 'completed',
-    registration_id: params.registrationId,
-    ...(params.utm.source && { utm_source: params.utm.source }),
-    ...(params.utm.medium && { utm_medium: params.utm.medium }),
-    ...(params.utm.campaign && { utm_campaign: params.utm.campaign }),
-    ...(params.utm.content && { utm_content: params.utm.content }),
-    ...(params.utm.term && { utm_term: params.utm.term }),
-    ...(params.utm.id && { utm_id: params.utm.id }),
+    order_id: params.registrationId,
   };
 
   const payload = {
@@ -150,7 +158,7 @@ export async function sendCompleteRegistrationEvent(params: {
         event_time: Math.floor(Date.now() / 1000),
         event_id: params.registrationId,
         action_source: 'website',
-        event_source_url: params.eventSourceUrl,
+        event_source_url: toOrigin(params.eventSourceUrl),
         user_data: userData,
         custom_data: customData,
       },
@@ -174,8 +182,9 @@ export async function sendCompleteRegistrationEvent(params: {
 }
 
 /**
- * QualifiedLead — fired the first time a visitor identifies as "Working
- * Professional" in the register-form occupation dropdown. Custom event
+ * QualifiedLead — fired for a visitor who identifies as "Working
+ * Professional", at SUBMIT time only (never on dropdown change), so the
+ * event always carries a complete, validated identity set. Custom event
  * name (PascalCase) so Meta's algorithm can be pointed at it as a
  * mid-funnel optimization signal.
  */
@@ -188,7 +197,6 @@ export async function sendQualifiedLeadEvent(params: {
   lastName: string;
   city: string;
   country: string;
-  externalId: string | undefined;
   fbc: string | undefined;
   fbp: string | undefined;
   clientIp: string | undefined;
@@ -201,9 +209,8 @@ export async function sendQualifiedLeadEvent(params: {
   const ln = hashName(params.lastName);
   const ct = hashCity(params.city);
   const country = hashCountry(params.country);
-  const externalId = params.externalId
-    ? sha256Hex(params.externalId.trim().toLowerCase())
-    : undefined;
+  // Same sha256(email) identity as CompleteRegistration and Pabbly.
+  const externalId = em;
 
   const emailNorm = params.email.trim().toLowerCase();
   const eventId = emailNorm
@@ -226,13 +233,9 @@ export async function sendQualifiedLeadEvent(params: {
     ...(params.clientIp && { client_ip_address: params.clientIp }),
   };
 
-  const customData = {
-    content_ids: ['postnatal_recovery_challenge_free'],
-    content_name: '5-Day Postpartum Recovery Challenge — Working Professional',
-    content_type: 'product',
-    lead_type: 'working_professional',
-  };
-
+  // No custom_data — content_name/lead_type were pure classification fuel
+  // and told Meta nothing it needs. The event NAME already carries the
+  // only meaning we want the optimizer to see.
   const payload = {
     data: [
       {
@@ -240,9 +243,8 @@ export async function sendQualifiedLeadEvent(params: {
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: 'website',
-        event_source_url: params.eventSourceUrl,
+        event_source_url: toOrigin(params.eventSourceUrl),
         user_data: userData,
-        custom_data: customData,
       },
     ],
   };

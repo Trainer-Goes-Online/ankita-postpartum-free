@@ -399,6 +399,22 @@ function CheckoutGrid() {
       // (GA4 alone; Meta CAPI already fired server-side in /api/register.)
       trackGa4EventOnce('complete_registration');
 
+      // QualifiedLead — only now, on a validated submit. Firing this from
+      // the occupation dropdown's onChange used to send a near-empty
+      // user_data block whenever someone picked the option before typing
+      // their details; at this point every field is present and verified.
+      if (fields.occupation === 'Working Professional') {
+        void fireMetaQualifiedLeadOnce({
+          firstName: fields.firstName.trim(),
+          lastName:  fields.lastName.trim(),
+          email:     fields.email.trim(),
+          city:      fields.city.trim(),
+          phone:     fields.phone.trim(),
+          countryCode,
+          dialCode:  selectedCountry.dial,
+        });
+      }
+
       // Stash hashed identifiers in the bw_mam cookie so the next PageView
       // (/thank-you) carries Manual Advanced Matching data — matches the
       // hashes server CAPI just sent for CompleteRegistration.
@@ -419,10 +435,10 @@ function CheckoutGrid() {
   }
 
   /**
-   * Meta CAPI `QualifiedLead` — fired ONCE per browser the first time
-   * the visitor selects "Working Professional" in the occupation
-   * dropdown. Uses whatever identifiers are already in the form at that
-   * moment (email may or may not be filled yet). Fire-and-forget so the
+   * Meta CAPI `QualifiedLead` — fired ONCE per browser, from the submit
+   * handler, for a visitor who selected "Working Professional". Every
+   * identifier is validated and present by the time this runs, so the
+   * event always ships full hashed user_data. Fire-and-forget so the
    * dropdown selection is never blocked.
    */
   async function fireMetaQualifiedLeadOnce(customer: {
@@ -594,21 +610,7 @@ function CheckoutGrid() {
                   <select
                     id="occupation"
                     value={fields.occupation}
-                    onChange={(e) => {
-                      const next = e.target.value as Occupation;
-                      handleChange('occupation', next);
-                      if (next === 'Working Professional') {
-                        void fireMetaQualifiedLeadOnce({
-                          firstName: fields.firstName.trim(),
-                          lastName:  fields.lastName.trim(),
-                          email:     fields.email.trim(),
-                          city:      fields.city.trim(),
-                          phone:     fields.phone.trim(),
-                          countryCode,
-                          dialCode:  (COUNTRIES.find((c) => c.code === countryCode) ?? COUNTRIES[0]).dial,
-                        });
-                      }
-                    }}
+                    onChange={(e) => handleChange('occupation', e.target.value as Occupation)}
                     onBlur={() => handleBlur('occupation')}
                     className="w-full appearance-none rounded-2xl border bg-white px-4 py-3 pr-10 text-[15px] outline-none transition-colors"
                     style={{
