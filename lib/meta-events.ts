@@ -15,7 +15,7 @@ import {
  * Three events fire from the server, all under CUSTOM names defined in
  * CHECKOUT_CONFIG.capi — never standard ones:
  *   - `atc_event`     on landing CTA click (POST /api/meta/add-to-cart)
- *   - `qualified_lead` when user picks "Working Professional"
+ *   - `ql_event`      when user picks "Working Professional"
  *     (POST /api/meta/qualified-lead)
  *   - `reg_complete`  on successful /api/register submission
  *
@@ -189,7 +189,7 @@ export async function sendCompleteRegistrationEvent(params: {
 }
 
 /**
- * `qualified_lead` — fired for a visitor who identifies as "Working
+ * `ql_event` — fired for a visitor who identifies as "Working
  * Professional", at SUBMIT time only (never on dropdown change), so the
  * event always carries a complete, validated identity set. Usable as a
  * mid-funnel optimization signal.

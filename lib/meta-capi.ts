@@ -7,7 +7,7 @@ import crypto from 'crypto';
  * has been removed (there is no payment). The custom `reg_complete`
  * event replaces it — see lib/meta-events.ts. These helpers are shared by
  * the register route + the intent-event routes (`atc_event`,
- * `qualified_lead`).
+ * `ql_event`).
  */
 
 export type Utm = {

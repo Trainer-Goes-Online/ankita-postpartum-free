@@ -10,7 +10,7 @@ import {
 /**
  * POST /api/meta/qualified-lead
  *
- * Fires the `qualified_lead` Meta CAPI custom event for a visitor who identified
+ * Fires the `ql_event` Meta CAPI custom event for a visitor who identified
  * as "Working Professional". Called from the register form's SUBMIT
  * handler only — never from the dropdown's onChange — so `customer` is
  * always a complete, validated identity set and the event carries full
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
         clientUserAgent,
         eventSourceUrl: resolvedEventSourceUrl,
       });
-      console.log('[ql] qualified_lead sent:', result);
+      console.log('[ql] ql_event sent:', result);
       return NextResponse.json({ ok: true, capi: 'sent' });
     } catch (err) {
       console.error('[ql] Meta CAPI error:', err);

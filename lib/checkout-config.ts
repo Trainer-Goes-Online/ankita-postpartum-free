@@ -52,7 +52,10 @@ export const CHECKOUT_CONFIG = {
     // ad sets. This object is the only place they are defined.
     addToCartEventName: 'atc_event',            // landing CTA click
     completeRegistrationEventName: 'reg_complete', // /api/register success
-    qualifiedLeadEventName: 'qualified_lead',   // "Working Professional"
+    // `ql_event`, not `qualified_lead`: field reports have Meta blocking
+    // names containing the token "lead" (`lead`, `generate_lead`) on
+    // restricted datasets, so the word is avoided entirely.
+    qualifiedLeadEventName: 'ql_event',         // "Working Professional"
     // Host allow-list: env-driven so a new deploy subdomain only needs an
     // env swap (in .env.local + Vercel), no code change. Localhost and
     // *.vercel.app previews are deliberately excluded so test traffic

@@ -400,7 +400,7 @@ function CheckoutGrid() {
       // (Meta CAPI `reg_complete` already fired server-side in /api/register.)
       trackGa4EventOnce('complete_registration');
 
-      // qualified_lead — only now, on a validated submit. Firing this from
+      // ql_event — only now, on a validated submit. Firing this from
       // the occupation dropdown's onChange used to send a near-empty
       // user_data block whenever someone picked the option before typing
       // their details; at this point every field is present and verified.
@@ -436,7 +436,7 @@ function CheckoutGrid() {
   }
 
   /**
-   * Meta CAPI `qualified_lead` — fired ONCE per browser, from the submit
+   * Meta CAPI `ql_event` — fired ONCE per browser, from the submit
    * handler, for a visitor who selected "Working Professional". Every
    * identifier is validated and present by the time this runs, so the
    * event always ships full hashed user_data. Fire-and-forget so the
@@ -600,7 +600,7 @@ function CheckoutGrid() {
                 </span>
               </div>
 
-              {/* Occupation — fires the `qualified_lead` Meta CAPI custom
+              {/* Occupation — fires the `ql_event` Meta CAPI custom
                   event when the user picks "Working Professional". Deduped
                   once per browser via bw_ql_fired. */}
               <div id="field-occupation" className="flex flex-col">
