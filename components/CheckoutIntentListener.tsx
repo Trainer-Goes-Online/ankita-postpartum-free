@@ -5,7 +5,7 @@ import { fireCheckoutIntent } from '@/lib/checkout-intent';
 
 /**
  * Mounted once in app/layout.tsx. Listens for any anchor click whose
- * destination is `/register` and fires Meta AddToCart + GA4 add_to_cart
+ * destination is `/register` and fires Meta `atc_event` + GA4 add_to_cart
  * exactly once per browser (both dedupes handled inside fireCheckoutIntent).
  *
  * Rendering nothing. Attaching at document level lets every CTA

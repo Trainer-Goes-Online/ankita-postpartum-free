@@ -34,11 +34,25 @@ const WHATSAPP_INVITE_URL =
 
 export const CHECKOUT_CONFIG = {
   capi: {
-    // Meta CAPI event names for the free funnel:
-    //   - AddToCart: fires on landing CTA click
-    //   - CompleteRegistration: fires on /api/register success
-    //   - QualifiedLead: fires when the user picks "Working Professional"
-    completeRegistrationEventName: 'CompleteRegistration',
+    // ── Meta CAPI event names — CUSTOM, never standard ──────────────────
+    // The dataset (Ankita Pixel 3 / 2344458902754627) is classified under
+    // Meta's "Health and wellness condition" category, which blocks or
+    // deprioritizes STANDARD events. Standard names are therefore banned
+    // here: `AddToCart`, `CompleteRegistration` and `QualifiedLead` are
+    // gone and must not come back — re-adding one re-triggers the exact
+    // restriction these names exist to route around.
+    //
+    // Per META_HW_POST_FIX_ROADMAP.md the win condition is not the warning
+    // disappearing (it won't — classification is content-driven and
+    // effectively permanent). It is these custom events continuing to flow
+    // so campaigns keep optimizing. Point every ad set at these names.
+    //
+    // If Meta later scans/deprioritizes these too (Scenario C), make the
+    // names more opaque here — `evt_a`, `evt_b`, `evt_c` — and repoint the
+    // ad sets. This object is the only place they are defined.
+    addToCartEventName: 'atc_event',            // landing CTA click
+    completeRegistrationEventName: 'reg_complete', // /api/register success
+    qualifiedLeadEventName: 'qualified_lead',   // "Working Professional"
     // Host allow-list: env-driven so a new deploy subdomain only needs an
     // env swap (in .env.local + Vercel), no code change. Localhost and
     // *.vercel.app previews are deliberately excluded so test traffic

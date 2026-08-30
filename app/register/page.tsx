@@ -4,7 +4,7 @@
  * /register — 2-column free registration form for the 5-Day Postpartum
  * Recovery Challenge (international free funnel). Self-contained
  * (no navbar, inline palette), routes success → /thank-you. Submits to
- * /api/register which fires Pabbly + Meta CAPI CompleteRegistration.
+ * /api/register which fires Pabbly + Meta CAPI `reg_complete`.
  * No payment provider: this funnel is entirely free.
  */
 
@@ -358,7 +358,7 @@ function CheckoutGrid() {
     try {
       // Send the enriched body so /api/register can resolve attribution
       // (cookie primary, body a supplement, referrer + _fbc fallback) and
-      // fire Pabbly + Meta CAPI CompleteRegistration.
+      // fire Pabbly + Meta CAPI `reg_complete`.
       const utmForOrder = readUtmCookie();
       const fbclidForOrder =
         typeof document !== 'undefined'
@@ -395,11 +395,12 @@ function CheckoutGrid() {
         throw new Error(result.error ?? 'Could not complete registration.');
       }
 
-      // Fire GA4 CompleteRegistration on the client side — once per browser.
-      // (GA4 alone; Meta CAPI already fired server-side in /api/register.)
+      // Fire the GA4 complete_registration event client-side — once per
+      // browser. GA4 keeps its own descriptive names; only Meta's are coded.
+      // (Meta CAPI `reg_complete` already fired server-side in /api/register.)
       trackGa4EventOnce('complete_registration');
 
-      // QualifiedLead — only now, on a validated submit. Firing this from
+      // qualified_lead — only now, on a validated submit. Firing this from
       // the occupation dropdown's onChange used to send a near-empty
       // user_data block whenever someone picked the option before typing
       // their details; at this point every field is present and verified.
@@ -417,7 +418,7 @@ function CheckoutGrid() {
 
       // Stash hashed identifiers in the bw_mam cookie so the next PageView
       // (/thank-you) carries Manual Advanced Matching data — matches the
-      // hashes server CAPI just sent for CompleteRegistration.
+      // hashes server CAPI just sent for `reg_complete`.
       await writeMam({
         email: fields.email.trim(),
         phone: `${selectedCountry.dial}${fields.phone.trim()}`,
@@ -435,7 +436,7 @@ function CheckoutGrid() {
   }
 
   /**
-   * Meta CAPI `QualifiedLead` — fired ONCE per browser, from the submit
+   * Meta CAPI `qualified_lead` — fired ONCE per browser, from the submit
    * handler, for a visitor who selected "Working Professional". Every
    * identifier is validated and present by the time this runs, so the
    * event always ships full hashed user_data. Fire-and-forget so the
@@ -599,7 +600,7 @@ function CheckoutGrid() {
                 </span>
               </div>
 
-              {/* Occupation — fires the "QualifiedLead" Meta CAPI custom
+              {/* Occupation — fires the `qualified_lead` Meta CAPI custom
                   event when the user picks "Working Professional". Deduped
                   once per browser via bw_ql_fired. */}
               <div id="field-occupation" className="flex flex-col">

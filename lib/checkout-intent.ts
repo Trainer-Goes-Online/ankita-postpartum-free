@@ -5,7 +5,7 @@ import { trackGa4EventOnce } from '@/lib/ga4';
 /**
  * Called from every landing-page CTA that routes to /checkout.
  * Fires two intent events, both deduped ONCE per browser:
- *   - Meta CAPI `AddToCart` via server route /api/meta/add-to-cart
+ *   - Meta CAPI `atc_event` (custom) via /api/meta/add-to-cart
  *     (localStorage: bw_atc_fired)
  *   - GA4 `add_to_cart` via gtag (localStorage: bw_ga4_atc_fired, handled
  *     inside trackGa4EventOnce)

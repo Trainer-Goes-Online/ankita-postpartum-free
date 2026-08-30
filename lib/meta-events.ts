@@ -1,3 +1,4 @@
+import { CHECKOUT_CONFIG } from '@/lib/checkout-config';
 import {
   hashEmail,
   hashPhone,
@@ -11,16 +12,21 @@ import {
 /**
  * Meta CAPI event senders — free funnel.
  *
- * Three events fire from the server:
- *   - AddToCart on landing CTA click (POST /api/meta/add-to-cart)
- *   - QualifiedLead when user picks "Working Professional"
+ * Three events fire from the server, all under CUSTOM names defined in
+ * CHECKOUT_CONFIG.capi — never standard ones:
+ *   - `atc_event`     on landing CTA click (POST /api/meta/add-to-cart)
+ *   - `qualified_lead` when user picks "Working Professional"
  *     (POST /api/meta/qualified-lead)
- *   - CompleteRegistration on successful /api/register submission
+ *   - `reg_complete`  on successful /api/register submission
  *
- * H&W PREVENTIVE POSTURE (META_HW_PREVENTIVE_SOP.md)
- * ---------------------------------------------------
- * Standard event names are retained by explicit decision, but every OTHER
- * classification surface the SOP names is stripped:
+ * H&W CORRECTIVE POSTURE (META_HEALTH_WELLNESS_RESTRICTION_SOP.md)
+ * ----------------------------------------------------------------
+ * The dataset IS classified under "Health and wellness condition", which
+ * blocks/deprioritizes standard events. The standard names this file used
+ * to send (AddToCart / CompleteRegistration / QualifiedLead) are gone.
+ * Do not reintroduce one "for priors" — that re-opens the restriction.
+ *
+ * Every other classification surface stays stripped:
  *
  *   - custom_data carries NO descriptive strings. No content_name,
  *     content_ids, content_type, category, lead_type, and no utm_* /
@@ -38,7 +44,7 @@ import {
  */
 
 /**
- * AddToCart — no PII available at CTA click time (the visitor hasn't
+ * `atc_event` — no PII available at CTA click time (the visitor hasn't
  * typed anything yet), so there is no email to derive external_id from.
  * Only signals we have are fbc/fbp cookies + IP + UA. Expected EMQ: 3–5
  * — a data-availability ceiling, not a bug.
@@ -71,7 +77,7 @@ export async function sendAddToCartEvent(params: {
   const payload = {
     data: [
       {
-        event_name: 'AddToCart',
+        event_name: CHECKOUT_CONFIG.capi.addToCartEventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: 'website',
@@ -98,9 +104,10 @@ export async function sendAddToCartEvent(params: {
 }
 
 /**
- * CompleteRegistration — fires when /api/register successfully accepts a
- * form submission. Full 11-signal payload. This is the "conversion"
- * event of the free funnel and is what campaigns should optimize for.
+ * `reg_complete` — fires when /api/register successfully accepts a form
+ * submission. Full 11-signal payload. This is the "conversion" event of
+ * the free funnel and the one campaigns must optimize for; there is no
+ * standard-event equivalent flowing any more.
  */
 export async function sendCompleteRegistrationEvent(params: {
   pixelId: string;
@@ -154,7 +161,7 @@ export async function sendCompleteRegistrationEvent(params: {
   const payload = {
     data: [
       {
-        event_name: 'CompleteRegistration',
+        event_name: CHECKOUT_CONFIG.capi.completeRegistrationEventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: params.registrationId,
         action_source: 'website',
@@ -182,10 +189,9 @@ export async function sendCompleteRegistrationEvent(params: {
 }
 
 /**
- * QualifiedLead — fired for a visitor who identifies as "Working
+ * `qualified_lead` — fired for a visitor who identifies as "Working
  * Professional", at SUBMIT time only (never on dropdown change), so the
- * event always carries a complete, validated identity set. Custom event
- * name (PascalCase) so Meta's algorithm can be pointed at it as a
+ * event always carries a complete, validated identity set. Usable as a
  * mid-funnel optimization signal.
  */
 export async function sendQualifiedLeadEvent(params: {
@@ -239,7 +245,7 @@ export async function sendQualifiedLeadEvent(params: {
   const payload = {
     data: [
       {
-        event_name: 'QualifiedLead',
+        event_name: CHECKOUT_CONFIG.capi.qualifiedLeadEventName,
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: 'website',

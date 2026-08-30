@@ -110,7 +110,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* Site-wide UTM persistence: writes cookie + rewrites URL on every nav */}
         <UtmCapture />
 
-        {/* Fires Meta CAPI AddToCart + GA4 add_to_cart when any anchor
+        {/* Fires Meta CAPI `atc_event` + GA4 add_to_cart when any anchor
             with href="/register" is clicked. Deduped once per browser. */}
         <CheckoutIntentListener />
 

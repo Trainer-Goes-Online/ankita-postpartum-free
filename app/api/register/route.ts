@@ -26,7 +26,7 @@ import {
  *      double-submits from the same email get Meta-deduped within 48h.
  *   4. Fire Pabbly webhook (host-gated to production — a preview or
  *      localhost submit never creates a CRM row).
- *   5. Fire Meta CAPI CompleteRegistration (same host gate).
+ *   5. Fire Meta CAPI `reg_complete` custom event (same host gate).
  *   6. Return `{success, registrationId}` so the client can redirect
  *      to /thank-you.
  */
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // ── Mint a deterministic registrationId ─────────────────────────────
     // sha256(email|reg) — stable per real user so a duplicate submit
-    // within Meta's 48h dedup window collapses to one CompleteRegistration
+    // within Meta's 48h dedup window collapses to one `reg_complete`
     // event. Pabbly may still see duplicate rows — filter downstream on
     // registration_id.
     const emailNorm = customer.email.trim().toLowerCase();
@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
       console.error(`[register] registrationId=${registrationId} PABBLY_WEBHOOK_URL not set`);
     }
 
-    // ── Fire Meta CAPI CompleteRegistration ─────────────────────────────
+    // ── Fire Meta CAPI `reg_complete` ───────────────────────────────────
     // Same host gate as Pabbly above.
     const metaPixelId =
       process.env.NEXT_PUBLIC_META_PIXEL_ID ?? process.env.META_PIXEL_ID;
@@ -236,7 +236,7 @@ export async function POST(req: NextRequest) {
           eventSourceUrl: resolvedEventSourceUrl,
         });
         console.log(
-          `[register] registrationId=${registrationId} Meta CAPI CompleteRegistration sent:`,
+          `[register] registrationId=${registrationId} Meta CAPI reg_complete sent:`,
           capiResult,
         );
         capiStatus = 'sent';

@@ -10,7 +10,7 @@ import {
 /**
  * POST /api/meta/add-to-cart
  *
- * Fires the `AddToCart` Meta CAPI event when a visitor clicks any landing
+ * Fires the `atc_event` Meta CAPI custom event when a visitor clicks any landing
  * CTA. The client sends a sendBeacon POST with just `{eventSourceUrl}`;
  * this route reads _fbc/_fbp from cookies and IP/UA from headers, gates
  * on the same production-host allow-list as the tripwire Purchase, and
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         clientUserAgent,
         eventSourceUrl: resolvedEventSourceUrl,
       });
-      console.log('[atc] AddToCart sent:', result);
+      console.log('[atc] atc_event sent:', result);
       return NextResponse.json({ ok: true, capi: 'sent' });
     } catch (err) {
       console.error('[atc] Meta CAPI error:', err);
